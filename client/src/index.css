@@ -358,6 +358,7 @@ body {
   border: none;
   background: #1e1f22;
   color: #fff;
+  font-size: 16px;
 }
 
 .edit-form button {
@@ -537,6 +538,7 @@ body {
   border: 1px solid #1e1f22;
   background: #1e1f22;
   color: #fff;
+  font-size: 16px;
 }
 
 .modal-actions {
@@ -587,6 +589,7 @@ body {
   border: 1px solid #1e1f22;
   background: #1e1f22;
   color: #fff;
+  font-size: 16px;
 }
 
 .inline-form button {
@@ -835,6 +838,10 @@ body {
     flex: 1;
     width: auto;
     min-width: 0;
+  }
+
+  .app.mobile .sidebar-footer {
+    padding-bottom: 20px;
   }
 
   .app.mobile .main {
