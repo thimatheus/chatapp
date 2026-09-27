@@ -3,6 +3,7 @@ services:
     name: chatapp-backend
     env: node
     rootDir: server
+    plan: free
     buildCommand: npm install
     startCommand: npm start
     envVars:
