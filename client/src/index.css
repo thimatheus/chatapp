@@ -2,11 +2,16 @@
   box-sizing: border-box;
 }
 
+html {
+  touch-action: pan-x pan-y;
+}
+
 body {
   margin: 0;
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: #1e1f22;
   color: #dbdee1;
+  touch-action: pan-x pan-y;
 }
 
 .auth-screen {
