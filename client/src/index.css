@@ -11,17 +11,20 @@ body {
 
 .auth-screen {
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #313338;
+  padding: 16px;
 }
 
 .auth-card {
   background: #2b2d31;
   padding: 32px;
   border-radius: 8px;
-  width: 320px;
+  width: 100%;
+  max-width: 320px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -45,6 +48,7 @@ body {
   border: 1px solid #1e1f22;
   background: #1e1f22;
   color: #fff;
+  font-size: 16px;
 }
 
 .auth-card button {
@@ -509,6 +513,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
 }
 
 .modal-card {
@@ -796,4 +801,84 @@ body {
   padding: 0 24px;
   border-radius: 24px;
   font-weight: 600;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  color: #dbdee1;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 8px 0 0;
+  vertical-align: middle;
+}
+
+/* ---- Layout mobile: uma coluna por vez, como um app de celular ---- */
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app.mobile {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .app.mobile .server-rail {
+    width: 64px;
+  }
+
+  .app.mobile .sidebar {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .app.mobile .main {
+    width: 100%;
+  }
+
+  .app.mobile .topbar span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app.mobile .message {
+    max-width: 82%;
+  }
+
+  .app.mobile .chat-input input {
+    font-size: 16px; /* evita o iOS dar zoom automático ao focar o campo */
+  }
+
+  .app.mobile .auth-card,
+  .app.mobile .modal-card {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .app.mobile .modal-card.wide {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .app.mobile .message-toolbar {
+    position: static;
+    display: flex;
+    margin-top: 4px;
+    background: transparent;
+    padding: 0;
+  }
+
+  .app.mobile .message-toolbar button {
+    font-size: 16px;
+    padding: 4px 6px;
+  }
 }

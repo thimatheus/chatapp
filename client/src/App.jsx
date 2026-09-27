@@ -8,6 +8,7 @@ import PublicChannelsModal from "./components/PublicChannelsModal.jsx";
 import CallPanel from "./components/CallPanel.jsx";
 import { api } from "./api.js";
 import { connectSocket, getSocket } from "./socket.js";
+import { useIsMobile } from "./useIsMobile.js";
 import {
   isSoundEnabled,
   setSoundEnabled,
@@ -31,6 +32,7 @@ function formatLastSeen(iso) {
 }
 
 export default function App() {
+  const isMobile = useIsMobile();
   const [auth, setAuth] = useState(() => {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
@@ -347,6 +349,12 @@ export default function App() {
     setIncomingCall(null);
   }
 
+  function backToList() {
+    setActiveContactId(null);
+    setActiveGroupId(null);
+    setActiveChannelId(null);
+  }
+
   if (!auth) return <Login onAuth={handleAuth} />;
 
   const activeServer = servers.find((s) => s.id === activeServerId);
@@ -362,6 +370,13 @@ export default function App() {
   }
 
   const canCall = (view === "dm" && activeContactId) || (view === "group" && activeGroupId);
+  const hasActiveConversation = Boolean(
+    (view === "dm" && activeContactId) ||
+      (view === "group" && activeGroupId) ||
+      (view === "server" && activeChannelId)
+  );
+  const showList = !isMobile || !hasActiveConversation;
+  const showChat = !isMobile || hasActiveConversation;
   const typingUsernames = Object.values(typingByKey[currentKey] || {});
   const isContactOnline = view === "dm" && activeContactId && onlineUserIds.has(activeContactId);
   const subtitle =
@@ -374,41 +389,51 @@ export default function App() {
       : "";
 
   return (
-    <div className="app">
-      <ServerRail
-        servers={servers}
-        activeServerId={activeServerId}
-        view={view}
-        onSelectServer={selectServer}
-        onSetView={setView}
-        onCreateServer={() => setModal("public")}
-      />
-      <Sidebar
-        view={view}
-        serverName={activeServer?.name || ""}
-        channels={channels}
-        activeChannelId={activeChannelId}
-        onSelectChannel={openChannel}
-        onCreateChannel={() => setModal("channel")}
-        contacts={contacts}
-        activeContactId={activeContactId}
-        onSelectContact={selectContact}
-        onAddContact={addContact}
-        onToggleBlock={toggleBlock}
-        blockedIds={blockedIds}
-        onlineUserIds={onlineUserIds}
-        groups={groups}
-        activeGroupId={activeGroupId}
-        onSelectGroup={selectGroup}
-        onCreateGroup={() => setModal("group")}
-        me={auth.user}
-        onAvatarChange={handleAvatarChange}
-        soundEnabled={soundEnabled}
-        onToggleSound={toggleSound}
-      />
+    <div className={`app ${isMobile ? "mobile" : ""}`}>
+      {showList && (
+        <ServerRail
+          servers={servers}
+          activeServerId={activeServerId}
+          view={view}
+          onSelectServer={selectServer}
+          onSetView={setView}
+          onCreateServer={() => setModal("public")}
+        />
+      )}
+      {showList && (
+        <Sidebar
+          view={view}
+          serverName={activeServer?.name || ""}
+          channels={channels}
+          activeChannelId={activeChannelId}
+          onSelectChannel={openChannel}
+          onCreateChannel={() => setModal("channel")}
+          contacts={contacts}
+          activeContactId={activeContactId}
+          onSelectContact={selectContact}
+          onAddContact={addContact}
+          onToggleBlock={toggleBlock}
+          blockedIds={blockedIds}
+          onlineUserIds={onlineUserIds}
+          groups={groups}
+          activeGroupId={activeGroupId}
+          onSelectGroup={selectGroup}
+          onCreateGroup={() => setModal("group")}
+          me={auth.user}
+          onAvatarChange={handleAvatarChange}
+          soundEnabled={soundEnabled}
+          onToggleSound={toggleSound}
+        />
+      )}
+      {showChat && (
       <div className="main">
         <div className="topbar">
           <span>
+            {isMobile && hasActiveConversation && (
+              <button className="back-btn" onClick={backToList}>
+                ←
+              </button>
+            )}
             {title}
             {subtitle && <span className="topbar-subtitle"> · {subtitle}</span>}
           </span>
@@ -447,6 +472,7 @@ export default function App() {
           theirReadUpTo={theirReadUpTo[activeContactId]}
         />
       </div>
+      )}
 
       {modal === "server" && (
         <PromptModal
