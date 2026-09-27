@@ -8,7 +8,7 @@ import serverRoutes from "./routes/servers.js";
 import messageRoutes from "./routes/messages.js";
 import groupRoutes from "./routes/groups.js";
 import { setupSocket } from "./socket.js";
-import "./db.js";
+import { ready } from "./db.js";
 
 const app = express();
 app.use(cors());
@@ -25,4 +25,6 @@ const io = new Server(httpServer, { cors: { origin: "*" } });
 setupSocket(io);
 
 const PORT = process.env.PORT || 4000;
-httpServer.listen(PORT, () => console.log(`Server rodando em http://localhost:${PORT}`));
+ready.then(() => {
+  httpServer.listen(PORT, () => console.log(`Server rodando em http://localhost:${PORT}`));
+});
