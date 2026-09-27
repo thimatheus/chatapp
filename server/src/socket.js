@@ -73,10 +73,12 @@ export function setupSocket(io) {
         "INSERT INTO messages (sender_id, channel_id, content, reply_to_id) VALUES (?, ?, ?, ?)",
         [socket.user.id, channelId, content.trim(), replyToId || null]
       );
-      io.to(`channel:${channelId}`).emit("channel:message", {
-        channelId,
-        message: await shapeOne(info.lastInsertRowid),
-      });
+      const message = await shapeOne(info.lastInsertRowid);
+      if (!message) {
+        console.error("channel:message – falha ao montar a mensagem", info.lastInsertRowid);
+        return;
+      }
+      io.to(`channel:${channelId}`).emit("channel:message", { channelId, message });
     });
 
     socket.on("dm:join", (otherUserId) => {
@@ -94,6 +96,10 @@ export function setupSocket(io) {
         [socket.user.id, recipientId, content.trim(), replyToId || null]
       );
       const message = await shapeOne(info.lastInsertRowid);
+      if (!message) {
+        console.error("dm:message – falha ao montar a mensagem", info.lastInsertRowid);
+        return;
+      }
       io.to(dmKey(socket.user.id, recipientId)).emit("dm:message", {
         withUserId: socket.user.id,
         message,
@@ -115,10 +121,12 @@ export function setupSocket(io) {
         "INSERT INTO messages (sender_id, group_id, content, reply_to_id) VALUES (?, ?, ?, ?)",
         [socket.user.id, groupId, content.trim(), replyToId || null]
       );
-      io.to(`group:${groupId}`).emit("group:message", {
-        groupId,
-        message: await shapeOne(info.lastInsertRowid),
-      });
+      const message = await shapeOne(info.lastInsertRowid);
+      if (!message) {
+        console.error("group:message – falha ao montar a mensagem", info.lastInsertRowid);
+        return;
+      }
+      io.to(`group:${groupId}`).emit("group:message", { groupId, message });
     });
 
     // ---- Digitando... ----

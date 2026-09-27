@@ -3,6 +3,7 @@ import { get, all } from "./db.js";
 // Recebe linhas cruas de `messages` (já com sender_id, username, avatar, content, etc.)
 // e devolve o formato enviado ao cliente, com preview de resposta e reações agregadas.
 export async function shapeMessages(rows) {
+  rows = rows.filter(Boolean);
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
   const replyIds = [...new Set(rows.map((r) => r.reply_to_id).filter(Boolean))];
