@@ -211,6 +211,25 @@ body {
   white-space: nowrap;
 }
 
+.sidebar-item-label.unread {
+  font-weight: 700;
+  color: #fff;
+}
+
+.unread-badge {
+  background: #3ba55d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
 .blocked-tag {
   margin-left: 6px;
   font-size: 10px;

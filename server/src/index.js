@@ -7,21 +7,24 @@ import userRoutes from "./routes/users.js";
 import serverRoutes from "./routes/servers.js";
 import messageRoutes from "./routes/messages.js";
 import groupRoutes from "./routes/groups.js";
+import pushRoutes from "./routes/push.js";
 import { setupSocket } from "./socket.js";
 import { ready } from "./db.js";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/servers", serverRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/push", pushRoutes);
 
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, { cors: { origin: "*" } });
+app.set("io", io);
 setupSocket(io);
 
 const PORT = process.env.PORT || 4000;

@@ -16,10 +16,12 @@ export default function Sidebar({
   onToggleBlock,
   blockedIds,
   onlineUserIds,
+  unreadDm,
   groups,
   activeGroupId,
   onSelectGroup,
   onCreateGroup,
+  unreadGroup,
   me,
   onAvatarChange,
   soundEnabled,
@@ -77,40 +79,48 @@ export default function Sidebar({
 
       <div className="sidebar-list">
         {view === "dm" &&
-          contacts.map((c) => (
-            <div
-              key={c.id}
-              className={`sidebar-item ${activeContactId === c.id ? "active" : ""}`}
-              onClick={() => onSelectContact(c.id)}
-            >
-              <Avatar username={c.username} avatar={c.avatar} online={onlineUserIds.has(c.id)} />
-              <span className="sidebar-item-label">
-                {c.username}
-                {blockedIds.has(c.id) && <span className="blocked-tag">bloqueado</span>}
-              </span>
-              <button
-                className="block-btn"
-                title={blockedIds.has(c.id) ? "Desbloquear" : "Bloquear"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleBlock(c.id);
-                }}
+          contacts.map((c) => {
+            const unread = unreadDm[c.id] || 0;
+            return (
+              <div
+                key={c.id}
+                className={`sidebar-item ${activeContactId === c.id ? "active" : ""}`}
+                onClick={() => onSelectContact(c.id)}
               >
-                {blockedIds.has(c.id) ? "✅" : "🚫"}
-              </button>
-            </div>
-          ))}
+                <Avatar username={c.username} avatar={c.avatar} online={onlineUserIds.has(c.id)} />
+                <span className={`sidebar-item-label ${unread > 0 ? "unread" : ""}`}>
+                  {c.username}
+                  {blockedIds.has(c.id) && <span className="blocked-tag">bloqueado</span>}
+                </span>
+                {unread > 0 && <span className="unread-badge">{unread}</span>}
+                <button
+                  className="block-btn"
+                  title={blockedIds.has(c.id) ? "Desbloquear" : "Bloquear"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleBlock(c.id);
+                  }}
+                >
+                  {blockedIds.has(c.id) ? "✅" : "🚫"}
+                </button>
+              </div>
+            );
+          })}
 
         {view === "group" &&
-          groups.map((g) => (
-            <div
-              key={g.id}
-              className={`sidebar-item ${activeGroupId === g.id ? "active" : ""}`}
-              onClick={() => onSelectGroup(g.id)}
-            >
-              👥 {g.name}
-            </div>
-          ))}
+          groups.map((g) => {
+            const unread = unreadGroup[g.id] || 0;
+            return (
+              <div
+                key={g.id}
+                className={`sidebar-item ${activeGroupId === g.id ? "active" : ""}`}
+                onClick={() => onSelectGroup(g.id)}
+              >
+                <span className={`sidebar-item-label ${unread > 0 ? "unread" : ""}`}>👥 {g.name}</span>
+                {unread > 0 && <span className="unread-badge">{unread}</span>}
+              </div>
+            );
+          })}
 
         {view === "server" &&
           channels.map((c) => (

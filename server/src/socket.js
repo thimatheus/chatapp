@@ -3,6 +3,7 @@ import { get, run, all } from "./db.js";
 import { JWT_SECRET } from "./auth.js";
 import { shapeOne } from "./messageShape.js";
 import { dmKey, keyForMessageRow } from "./conversation.js";
+import { pushToUser } from "./push.js";
 
 const MAX_CALL_PARTICIPANTS = 7;
 
@@ -109,6 +110,12 @@ export function setupSocket(io) {
         fromUsername: socket.user.username,
         preview: content.trim().slice(0, 80),
       });
+      pushToUser(recipientId, {
+        title: socket.user.username,
+        body: content.trim().slice(0, 120),
+        tag: `dm:${socket.user.id}`,
+        url: "/",
+      });
     });
 
     socket.on("group:join", (groupId) => {
@@ -127,6 +134,17 @@ export function setupSocket(io) {
         return;
       }
       io.to(`group:${groupId}`).emit("group:message", { groupId, message });
+
+      const members = await all("SELECT user_id FROM group_members WHERE group_id = ?", [groupId]);
+      for (const m of members) {
+        if (m.user_id === socket.user.id) continue;
+        pushToUser(m.user_id, {
+          title: `${socket.user.username} (grupo)`,
+          body: content.trim().slice(0, 120),
+          tag: `group:${groupId}`,
+          url: "/",
+        });
+      }
     });
 
     // ---- Digitando... ----
@@ -219,6 +237,12 @@ export function setupSocket(io) {
         label,
         fromUserId: socket.user.id,
         fromUsername: socket.user.username,
+      });
+      pushToUser(toUserId, {
+        title: `${socket.user.username} está ligando`,
+        body: kind === "video" ? "Chamada de vídeo" : "Chamada de voz",
+        tag: "call",
+        url: "/",
       });
     });
 

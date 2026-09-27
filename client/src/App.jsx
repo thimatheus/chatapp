@@ -9,6 +9,7 @@ import CallPanel from "./components/CallPanel.jsx";
 import { api } from "./api.js";
 import { connectSocket, getSocket } from "./socket.js";
 import { useIsMobile } from "./useIsMobile.js";
+import { subscribeToPush } from "./push.js";
 import {
   isSoundEnabled,
   setSoundEnabled,
@@ -60,6 +61,8 @@ export default function App() {
 
   const [incomingCall, setIncomingCall] = useState(null);
   const [activeCall, setActiveCall] = useState(null);
+  const [unreadDm, setUnreadDm] = useState({}); // contactId -> count
+  const [unreadGroup, setUnreadGroup] = useState({}); // groupId -> count
 
   function handleAuth(data) {
     localStorage.setItem("token", data.token);
@@ -76,12 +79,20 @@ export default function App() {
 
   useEffect(() => {
     if (!auth) return;
-    requestNotificationPermission();
+    requestNotificationPermission().then(subscribeToPush);
     const socket = connectSocket(auth.token);
     api.myServers().then(setServers);
     api.contacts().then(setContacts);
     api.myGroups().then(setGroups);
     api.blockedContacts().then((rows) => setBlockedIds(new Set(rows.map((r) => r.id))));
+    api.unreadCounts().then(({ dm, group }) => {
+      setUnreadDm(dm);
+      setUnreadGroup(group);
+    });
+
+    socket.on("contact:added", (contact) => {
+      setContacts((prev) => (prev.some((c) => c.id === contact.id) ? prev : [...prev, contact]));
+    });
 
     socket.on("presence:snapshot", ({ onlineUserIds: ids }) => setOnlineUserIds(new Set(ids)));
     socket.on("presence:update", ({ userId, online, lastSeen }) => {
@@ -106,6 +117,11 @@ export default function App() {
       setActiveContactId((current) => {
         if (current === message.sender_id || message.sender_id === auth.user.id) {
           setMessages((prev) => [...prev, message]);
+        } else if (message.sender_id !== auth.user.id) {
+          setUnreadDm((prev) => ({
+            ...prev,
+            [message.sender_id]: (prev[message.sender_id] || 0) + 1,
+          }));
         }
         return current;
       });
@@ -124,9 +140,12 @@ export default function App() {
 
     socket.on("group:message", ({ groupId, message }) => {
       setActiveGroupId((current) => {
-        if (current === groupId) setMessages((prev) => [...prev, message]);
-        else if (message.sender_id !== auth.user.id)
+        if (current === groupId) {
+          setMessages((prev) => [...prev, message]);
+        } else if (message.sender_id !== auth.user.id) {
           showNotification(message.username, message.content);
+          setUnreadGroup((prev) => ({ ...prev, [groupId]: (prev[groupId] || 0) + 1 }));
+        }
         return current;
       });
     });
@@ -177,10 +196,10 @@ export default function App() {
 
   // Confirmação de leitura: avisa que li as mensagens da conversa aberta
   useEffect(() => {
-    if (view !== "dm" || !activeContactId || messages.length === 0) return;
+    if ((view !== "dm" && view !== "group") || messages.length === 0) return;
     const last = messages[messages.length - 1];
     getSocket()?.emit("read:ack", { key: currentKey, lastMessageId: last.id });
-  }, [messages, view, activeContactId, currentKey]);
+  }, [messages, view, currentKey]);
 
   const openChannel = useCallback(async (channelId) => {
     setView("server");
@@ -210,6 +229,7 @@ export default function App() {
     setActiveContactId(userId);
     setActiveGroupId(null);
     setActiveChannelId(null);
+    setUnreadDm((prev) => ({ ...prev, [userId]: 0 }));
     const socket = getSocket();
     socket.emit("dm:join", userId);
     const { messages: history, theirReadUpTo: readUpTo } = await api.dmHistory(userId);
@@ -222,6 +242,7 @@ export default function App() {
     setActiveGroupId(groupId);
     setActiveContactId(null);
     setActiveChannelId(null);
+    setUnreadGroup((prev) => ({ ...prev, [groupId]: 0 }));
     const socket = getSocket();
     socket.emit("group:join", groupId);
     const history = await api.groupHistory(groupId);
@@ -415,10 +436,12 @@ export default function App() {
           onToggleBlock={toggleBlock}
           blockedIds={blockedIds}
           onlineUserIds={onlineUserIds}
+          unreadDm={unreadDm}
           groups={groups}
           activeGroupId={activeGroupId}
           onSelectGroup={selectGroup}
           onCreateGroup={() => setModal("group")}
+          unreadGroup={unreadGroup}
           me={auth.user}
           onAvatarChange={handleAvatarChange}
           soundEnabled={soundEnabled}

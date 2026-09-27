@@ -57,6 +57,23 @@ router.post("/contacts", async (req, res) => {
     req.user.id,
     target.id,
   ]);
+  // Adiciona nos dois sentidos: quem foi adicionado já vê a outra pessoa também,
+  // sem precisar adicionar de volta manualmente.
+  await run("INSERT OR IGNORE INTO contacts (user_id, contact_id) VALUES (?, ?)", [
+    target.id,
+    req.user.id,
+  ]);
+
+  const me = await get("SELECT id, username, access_number, avatar FROM users WHERE id = ?", [
+    req.user.id,
+  ]);
+  req.app.get("io")?.to(`user:${target.id}`).emit("contact:added", {
+    id: me.id,
+    username: me.username,
+    accessNumber: me.access_number,
+    avatar: me.avatar,
+  });
+
   res.json({
     id: target.id,
     username: target.username,

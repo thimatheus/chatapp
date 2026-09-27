@@ -2,7 +2,7 @@ import { Router } from "express";
 import { get, all } from "../db.js";
 import { authMiddleware } from "../auth.js";
 import { shapeMessages } from "../messageShape.js";
-import { dmKey } from "../conversation.js";
+import { dmKey, groupKey } from "../conversation.js";
 
 const router = Router();
 router.use(authMiddleware);
@@ -57,6 +57,35 @@ router.get("/group/:groupId", async (req, res) => {
     [groupId]
   );
   res.json(await shapeMessages(rows));
+});
+
+// Quantidade de mensagens não lidas por conversa (DMs e grupos)
+router.get("/unread", async (req, res) => {
+  const meId = req.user.id;
+  const contacts = await all("SELECT contact_id FROM contacts WHERE user_id = ?", [meId]);
+  const groups = await all("SELECT group_id FROM group_members WHERE user_id = ?", [meId]);
+
+  const dm = {};
+  for (const c of contacts) {
+    const lastRead = await readStateFor(meId, dmKey(meId, c.contact_id));
+    const row = await get(
+      "SELECT COUNT(*) as cnt FROM messages WHERE sender_id = ? AND recipient_id = ? AND id > ?",
+      [c.contact_id, meId, lastRead]
+    );
+    if (row.cnt > 0) dm[c.contact_id] = row.cnt;
+  }
+
+  const group = {};
+  for (const g of groups) {
+    const lastRead = await readStateFor(meId, groupKey(g.group_id));
+    const row = await get(
+      "SELECT COUNT(*) as cnt FROM messages WHERE group_id = ? AND sender_id != ? AND id > ?",
+      [g.group_id, meId, lastRead]
+    );
+    if (row.cnt > 0) group[g.group_id] = row.cnt;
+  }
+
+  res.json({ dm, group });
 });
 
 export default router;

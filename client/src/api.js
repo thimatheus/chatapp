@@ -61,4 +61,9 @@ export const api = {
   channelHistory: (channelId) => request(`/messages/channel/${channelId}`),
   dmHistory: (userId) => request(`/messages/dm/${userId}`),
   groupHistory: (groupId) => request(`/messages/group/${groupId}`),
+  unreadCounts: () => request("/messages/unread"),
+
+  pushPublicKey: () => request("/push/public-key"),
+  pushSubscribe: (subscription) =>
+    request("/push/subscribe", { method: "POST", body: JSON.stringify({ subscription }) }),
 };

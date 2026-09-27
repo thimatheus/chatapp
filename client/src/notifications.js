@@ -11,9 +11,9 @@ export function setSoundEnabled(enabled) {
   localStorage.setItem(SOUND_KEY, enabled ? "1" : "0");
 }
 
-export function requestNotificationPermission() {
+export async function requestNotificationPermission() {
   if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
+    await Notification.requestPermission();
   }
 }
 
